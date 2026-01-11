@@ -3,6 +3,7 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import { authRouter } from './routes/auth.js';
 import { imagesRouter } from './routes/images.js';
+import { gamesRouter } from './routes/games.js';
 
 export function createApp(): Express {
   const app = express();
@@ -16,6 +17,7 @@ export function createApp(): Express {
 
   app.use('/api/auth', authRouter);
   app.use('/api/images', imagesRouter);
+  app.use('/api/games', gamesRouter);
 
   return app;
 }
