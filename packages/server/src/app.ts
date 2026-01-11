@@ -2,6 +2,7 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import { authRouter } from './routes/auth.js';
+import { imagesRouter } from './routes/images.js';
 
 export function createApp(): Express {
   const app = express();
@@ -14,6 +15,7 @@ export function createApp(): Express {
   });
 
   app.use('/api/auth', authRouter);
+  app.use('/api/images', imagesRouter);
 
   return app;
 }
