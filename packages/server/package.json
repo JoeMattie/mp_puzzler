@@ -7,7 +7,11 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@mp-puzzler/shared": "workspace:*",

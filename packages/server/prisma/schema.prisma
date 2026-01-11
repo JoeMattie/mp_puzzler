@@ -35,7 +35,7 @@ model Session {
 
 model Image {
   id        String   @id @default(uuid())
-  url       String
+  url       String   @unique
   width     Int
   height    Int
   name      String
