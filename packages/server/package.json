@@ -1,0 +1,38 @@
+{
+  "name": "@mp-puzzler/server",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "lint": "eslint src/",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@mp-puzzler/shared": "workspace:*",
+    "@prisma/client": "^5.0.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.0",
+    "jsonwebtoken": "^9.0.0",
+    "nanoid": "^5.0.0",
+    "socket.io": "^4.7.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.0",
+    "@types/cors": "^2.8.0",
+    "@types/express": "^4.17.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/supertest": "^6.0.3",
+    "prisma": "^5.0.0",
+    "supertest": "^7.2.2",
+    "tsx": "^4.0.0",
+    "vitest": "^1.0.0"
+  }
+}

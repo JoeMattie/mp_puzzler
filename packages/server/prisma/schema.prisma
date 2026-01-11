@@ -1,0 +1,99 @@
+// packages/server/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  username      String?   @unique
+  email         String?   @unique
+  passwordHash  String?
+  oauthProvider String?
+  oauthId       String?
+  createdAt     DateTime  @default(now())
+  sessions      Session[]
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  token       String   @unique
+  displayName String
+  createdAt   DateTime @default(now())
+  lastSeen    DateTime @default(now())
+
+  createdPuzzles Puzzle[]
+  adminGames     Game[]   @relation("GameAdmin")
+}
+
+model Image {
+  id        String   @id @default(uuid())
+  url       String   @unique
+  width     Int
+  height    Int
+  name      String
+  isCurated Boolean  @default(false)
+  uploadedBy String?
+  createdAt DateTime @default(now())
+  puzzles   Puzzle[]
+}
+
+model Puzzle {
+  id          String   @id @default(uuid())
+  imageId     String
+  image       Image    @relation(fields: [imageId], references: [id])
+  pieceCount  Int
+  tileType    String
+  stencilData Json
+  createdById String?
+  createdBy   Session? @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  games       Game[]
+}
+
+model Game {
+  id             String       @id @default(uuid())
+  urlSlug        String       @unique
+  puzzleId       String
+  puzzle         Puzzle       @relation(fields: [puzzleId], references: [id])
+  adminSessionId String?
+  adminSession   Session?     @relation("GameAdmin", fields: [adminSessionId], references: [id])
+  status         String       @default("active")
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+  pieceStates    PieceState[]
+  edgeStates     EdgeState[]
+}
+
+model PieceState {
+  id         String  @id @default(uuid())
+  gameId     String
+  game       Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  pieceIndex Int
+  x          Float
+  y          Float
+  rotation   Float
+  inPanel    Boolean @default(true)
+  panelOrder Int?
+  lockGroup  Int?
+
+  @@unique([gameId, pieceIndex])
+}
+
+model EdgeState {
+  id     String  @id @default(uuid())
+  gameId String
+  game   Game    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  pieceA Int
+  pieceB Int
+  solved Boolean @default(false)
+
+  @@unique([gameId, pieceA, pieceB])
+}
