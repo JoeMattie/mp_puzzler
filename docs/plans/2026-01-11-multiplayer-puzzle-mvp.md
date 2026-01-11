@@ -6,7 +6,7 @@
 
 **Architecture:** Monolithic Node.js server with Express for REST API, Socket.IO for real-time sync, PostgreSQL for persistence. React frontend for lobby, PixiJS for puzzle canvas. Hybrid stencil generation (server computes geometry, client renders sprites).
 
-**Tech Stack:** TypeScript, Node.js, Express, Socket.IO, PostgreSQL, Prisma ORM, React 18, PixiJS 8, Vite, Biome (linting/formatting)
+**Tech Stack:** TypeScript, Node.js, Express, Socket.IO, PostgreSQL, Prisma ORM, React 18, PixiJS 8, Vite
 
 ---
 
@@ -20,7 +20,6 @@
 - Create: `packages/client/package.json`
 - Create: `packages/shared/package.json`
 - Create: `turbo.json`
-- Create: `biome.json`
 
 **Step 1: Create root package.json**
 
@@ -38,7 +37,6 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
     "turbo": "^2.0.0",
     "typescript": "^5.3.0"
   }
@@ -57,8 +55,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest",
-    "lint": "biome check src/",
-    "format": "biome format src/ --write"
+    "lint": "eslint src/"
   },
   "dependencies": {
     "@mp-puzzler/shared": "workspace:*",
@@ -96,8 +93,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "lint": "biome check src/",
-    "format": "biome format src/ --write"
+    "lint": "eslint src/"
   },
   "dependencies": {
     "@mp-puzzler/shared": "workspace:*",
@@ -162,42 +158,11 @@
 }
 ```
 
-**Step 6: Create biome.json**
-
-```json
-{
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "suspicious": {
-        "noExplicitAny": "off"
-      }
-    }
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "semicolons": "always"
-    }
-  }
-}
-```
-
-**Step 7: Commit**
+**Step 6: Commit**
 
 ```bash
-git add package.json packages/ turbo.json biome.json
-git commit -m "chore: initialize monorepo structure with turborepo and biome"
+git add package.json packages/ turbo.json
+git commit -m "chore: initialize monorepo structure with turborepo"
 ```
 
 ---
