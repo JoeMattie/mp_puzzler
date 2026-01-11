@@ -1,5 +1,5 @@
 // packages/client/src/game/Game.ts
-import { Application, Container, Sprite, Texture, Rectangle } from 'pixi.js';
+import { Application, Container, Sprite, Texture, Rectangle, Graphics, Text, TextStyle } from 'pixi.js';
 import type { Stencil, GameState } from '@mp-puzzler/shared';
 import { generateSpriteSheet, GeneratedSpriteSheet } from './SpriteSheetGenerator';
 
@@ -10,6 +10,7 @@ export class Game {
   private pieces: Map<number, Sprite> = new Map();
   private spriteSheet: GeneratedSpriteSheet | null = null;
   private stencil: Stencil | null = null;
+  public cursors: Map<string, { sprite: Graphics; label: Text }> = new Map();
 
   private isDragging = false;
   private draggedPiece: Sprite | null = null;
@@ -181,6 +182,48 @@ export class Game {
     if (sprite && sprite !== this.draggedPiece) {
       sprite.rotation = rotation;
     }
+  }
+
+  // Cursor presence methods
+  addCursor(playerId: string, displayName: string) {
+    if (this.cursors.has(playerId)) return;
+
+    const cursor = new Graphics();
+    cursor.circle(0, 0, 8);
+    cursor.fill({ color: 0x4fc3f7, alpha: 0.8 });
+    cursor.visible = false;
+
+    const label = new Text({
+      text: displayName,
+      style: new TextStyle({
+        fontSize: 12,
+        fill: 0xffffff,
+        fontFamily: 'sans-serif',
+      }),
+    });
+    label.y = 12;
+    label.anchor.set(0.5, 0);
+    cursor.addChild(label);
+
+    this.surface.addChild(cursor);
+    this.cursors.set(playerId, { sprite: cursor, label });
+  }
+
+  updateCursor(playerId: string, x: number, y: number) {
+    const cursor = this.cursors.get(playerId);
+    if (!cursor) return;
+
+    cursor.sprite.x = x;
+    cursor.sprite.y = y;
+    cursor.sprite.visible = true;
+  }
+
+  removeCursor(playerId: string) {
+    const cursor = this.cursors.get(playerId);
+    if (!cursor) return;
+
+    this.surface.removeChild(cursor.sprite);
+    this.cursors.delete(playerId);
   }
 
   destroy() {

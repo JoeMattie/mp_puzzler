@@ -70,6 +70,30 @@ export function PuzzleCanvas({ gameSlug }: Props) {
         game.updatePiecePosition(pieceIndex, x, y);
         game.updatePieceRotation(pieceIndex, rotation);
       });
+
+      // Handle cursor presence events
+      socket.on('player:joined', ({ id, displayName }) => {
+        game.addCursor(id, displayName);
+      });
+
+      socket.on('player:left', ({ playerId }) => {
+        game.removeCursor(playerId);
+      });
+
+      socket.on('cursor:moved', ({ playerId, displayName, x, y }) => {
+        if (!game.cursors.has(playerId)) {
+          game.addCursor(playerId, displayName);
+        }
+        game.updateCursor(playerId, x, y);
+      });
+
+      // Broadcast local cursor position
+      canvas.addEventListener('pointermove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        socket.emit('cursor:move', { x, y });
+      });
     }
 
     init();
