@@ -1,8 +1,9 @@
 // packages/server/src/app.ts
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
+import { authRouter } from './routes/auth.js';
 
-export function createApp() {
+export function createApp(): Express {
   const app = express();
 
   app.use(cors());
@@ -11,6 +12,8 @@ export function createApp() {
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
+
+  app.use('/api/auth', authRouter);
 
   return app;
 }
