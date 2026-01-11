@@ -1,7 +1,5 @@
 // packages/server/src/services/images.ts
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma.js';
 
 export async function getCuratedImages() {
   return prisma.image.findMany({

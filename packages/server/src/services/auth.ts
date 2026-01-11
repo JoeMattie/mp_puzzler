@@ -1,9 +1,7 @@
 // packages/server/src/services/auth.ts
-import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
 const ADJECTIVES = ['Happy', 'Clever', 'Swift', 'Brave', 'Calm', 'Eager', 'Gentle', 'Kind'];

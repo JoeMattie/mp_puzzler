@@ -2,26 +2,23 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../app.js';
-import { prisma, isDatabaseAvailable } from './helpers/db.js';
+import { dbAvailable, prisma } from './setup.js';
 
-let dbAvailable = false;
-
-beforeAll(async () => {
-  dbAvailable = await isDatabaseAvailable();
-  if (!dbAvailable) {
-    console.log('⚠️  Database not available, skipping images tests');
-  }
-});
-
-describe.skipIf(() => !dbAvailable)('Images endpoints', () => {
+describe.skipIf(!dbAvailable)('Images endpoints', () => {
   const app = createApp();
 
   beforeAll(async () => {
-    // Seed curated images
+    // Clean up related data first (foreign key constraints)
+    await prisma.pieceState.deleteMany();
+    await prisma.edgeState.deleteMany();
+    await prisma.game.deleteMany();
+    await prisma.puzzle.deleteMany();
+    await prisma.session.deleteMany();
+    await prisma.image.deleteMany();
     await prisma.image.createMany({
       data: [
-        { id: 'test-1', url: '/images/landscape.jpg', width: 1920, height: 1080, name: 'Landscape', isCurated: true },
-        { id: 'test-2', url: '/images/abstract.jpg', width: 1600, height: 1600, name: 'Abstract', isCurated: true },
+        { id: 'img-test-1', url: '/images/landscape-test.jpg', width: 1920, height: 1080, name: 'Landscape', isCurated: true },
+        { id: 'img-test-2', url: '/images/abstract-test.jpg', width: 1600, height: 1600, name: 'Abstract', isCurated: true },
       ],
     });
   });
@@ -44,7 +41,7 @@ describe.skipIf(() => !dbAvailable)('Images endpoints', () => {
 
   describe('GET /api/images/:id', () => {
     it('should return single image', async () => {
-      const res = await request(app).get('/api/images/test-1');
+      const res = await request(app).get('/api/images/img-test-1');
 
       expect(res.status).toBe(200);
       expect(res.body.name).toBe('Landscape');

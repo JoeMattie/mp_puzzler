@@ -1,8 +1,6 @@
 // packages/server/src/services/snap.ts
-import { PrismaClient } from '@prisma/client';
 import type { Stencil } from '@mp-puzzler/shared';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma.js';
 
 const POSITION_THRESHOLD = 0.1; // 10% of piece width
 const ROTATION_THRESHOLD = Math.PI / 5; // ~36 degrees (10% of full rotation)

@@ -1,11 +1,9 @@
 // packages/server/src/socket/handlers.ts
 import { Server, Socket } from 'socket.io';
-import { PrismaClient } from '@prisma/client';
 import type { ServerToClientEvents, ClientToServerEvents } from '@mp-puzzler/shared';
 import { getSessionFromToken } from '../services/auth.js';
 import { checkSnap } from '../services/snap.js';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma.js';
 
 // Track piece ownership: gameId -> pieceIndex -> sessionId
 const pieceOwners = new Map<string, Map<number, string>>();

@@ -392,6 +392,56 @@ git commit -m "feat: add shared types and validation schemas"
 
 ## Phase 2: Database Setup
 
+### Task 2.0: Start PostgreSQL with Docker
+
+**Prerequisites:** Docker must be installed and running.
+
+**Step 1: Create docker-compose.yml**
+
+```yaml
+# docker-compose.yml (project root)
+services:
+  db:
+    image: postgres:16
+    container_name: puzzler-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mp_puzzler
+    ports:
+      - "5432:5432"
+    volumes:
+      - puzzler-db-data:/var/lib/postgresql/data
+
+volumes:
+  puzzler-db-data:
+```
+
+**Step 2: Start the database**
+
+```bash
+docker compose up -d
+```
+
+Expected: Container starts, database available on localhost:5432
+
+**Step 3: Verify connection**
+
+```bash
+docker compose exec db psql -U postgres -d mp_puzzler -c "SELECT 1"
+```
+
+Expected: Returns `1`
+
+**Step 4: Commit**
+
+```bash
+git add docker-compose.yml
+git commit -m "chore: add docker-compose for PostgreSQL"
+```
+
+---
+
 ### Task 2.1: Initialize Prisma Schema
 
 **Files:**
