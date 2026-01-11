@@ -3,6 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 import type { ServerToClientEvents, ClientToServerEvents } from '@mp-puzzler/shared';
 import { getSessionFromToken } from '../services/auth.js';
+import { checkSnap } from '../services/snap.js';
 
 const prisma = new PrismaClient();
 
@@ -155,23 +156,60 @@ export function registerSocketHandlers(
       // Release ownership
       lockGroupPieces.forEach((idx) => owners.delete(idx));
 
-      // TODO: Check for snap conditions
-      // For now, just save position
+      // Check for snap
+      const snapResult = await checkSnap(gameId, pieceIndex, x, y, rotation);
+
+      // Save position (use snapped position if applicable)
       await prisma.pieceState.update({
         where: { gameId_pieceIndex: { gameId, pieceIndex } },
-        data: { x, y, rotation, inPanel: false, panelOrder: null },
+        data: {
+          x: snapResult.newPosition.x,
+          y: snapResult.newPosition.y,
+          rotation: snapResult.newRotation,
+          inPanel: false,
+          panelOrder: null,
+        },
       });
 
-      callback({ x, y, rotation, snapped: false });
+      callback({
+        x: snapResult.newPosition.x,
+        y: snapResult.newPosition.y,
+        rotation: snapResult.newRotation,
+        snapped: snapResult.snapped,
+        edges: snapResult.snappedEdges,
+      });
 
       socket.to(`game:${gameSlug}`).emit('piece:dropped', {
         pieceIndex,
-        x,
-        y,
-        rotation,
-        snapped: false,
-        newLockGroup: null,
+        x: snapResult.newPosition.x,
+        y: snapResult.newPosition.y,
+        rotation: snapResult.newRotation,
+        snapped: snapResult.snapped,
+        newLockGroup: snapResult.snapped ? snapResult.newLockGroup : null,
       });
+
+      if (snapResult.snapped) {
+        socket.to(`game:${gameSlug}`).emit('piece:snapped', {
+          edges: snapResult.snappedEdges,
+          lockGroup: snapResult.newLockGroup,
+        });
+      }
+
+      // Check for game completion
+      const unsolvedEdges = await prisma.edgeState.count({
+        where: { gameId, solved: false },
+      });
+
+      if (unsolvedEdges === 0) {
+        await prisma.game.update({
+          where: { id: gameId },
+          data: { status: 'completed', completedAt: new Date() },
+        });
+
+        io.to(`game:${gameSlug}`).emit('game:completed', {
+          completedAt: new Date().toISOString(),
+        });
+      }
     });
 
     // Handle cursor move
