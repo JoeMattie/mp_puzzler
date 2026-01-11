@@ -20,9 +20,11 @@ export function PuzzleCanvas({ gameSlug }: Props) {
     const canvas = canvasRef.current;
     const game = new Game();
     gameRef.current = game;
+    let cancelled = false;
 
     async function init() {
       await game.init(canvas);
+      if (cancelled) return;
 
       // Load game data
       const [gameData, stencil, state] = await Promise.all([
@@ -99,6 +101,7 @@ export function PuzzleCanvas({ gameSlug }: Props) {
     init();
 
     return () => {
+      cancelled = true;
       socketRef.current?.disconnect();
       gameRef.current?.destroy();
     };

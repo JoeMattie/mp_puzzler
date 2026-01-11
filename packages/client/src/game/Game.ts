@@ -20,6 +20,9 @@ export class Game {
   private onPieceMove?: (pieceIndex: number, x: number, y: number) => void;
   private onPieceDrop?: (pieceIndex: number, x: number, y: number, rotation: number) => void;
 
+  private initialized = false;
+  private destroyed = false;
+
   constructor() {
     this.app = new Application();
     this.surface = new Container();
@@ -27,12 +30,16 @@ export class Game {
   }
 
   async init(canvas: HTMLCanvasElement) {
+    if (this.destroyed) return;
+
     await this.app.init({
       canvas,
       resizeTo: canvas.parentElement!,
       backgroundColor: 0x1a1a2e,
       antialias: true,
     });
+
+    if (this.destroyed) return;
 
     // Setup containers
     this.surface.sortableChildren = true;
@@ -41,6 +48,8 @@ export class Game {
 
     // Setup viewport controls
     this.setupViewportControls();
+
+    this.initialized = true;
   }
 
   async loadPuzzle(imageUrl: string, stencil: Stencil, state: GameState) {
@@ -227,6 +236,10 @@ export class Game {
   }
 
   destroy() {
-    this.app.destroy(true);
+    this.destroyed = true;
+    // Only destroy if fully initialized to avoid race conditions
+    if (this.initialized && this.app.stage) {
+      this.app.destroy(true);
+    }
   }
 }
