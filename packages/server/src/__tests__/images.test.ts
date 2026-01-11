@@ -2,11 +2,18 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../app.js';
-import { PrismaClient } from '@prisma/client';
+import { prisma, isDatabaseAvailable } from './helpers/db.js';
 
-const prisma = new PrismaClient();
+let dbAvailable = false;
 
-describe('Images endpoints', () => {
+beforeAll(async () => {
+  dbAvailable = await isDatabaseAvailable();
+  if (!dbAvailable) {
+    console.log('⚠️  Database not available, skipping images tests');
+  }
+});
+
+describe.skipIf(() => !dbAvailable)('Images endpoints', () => {
   const app = createApp();
 
   beforeAll(async () => {

@@ -1,12 +1,19 @@
 // packages/server/src/__tests__/games.test.ts
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../app.js';
-import { PrismaClient } from '@prisma/client';
+import { prisma, isDatabaseAvailable } from './helpers/db.js';
 
-const prisma = new PrismaClient();
+let dbAvailable = false;
 
-describe('Games endpoints', () => {
+beforeAll(async () => {
+  dbAvailable = await isDatabaseAvailable();
+  if (!dbAvailable) {
+    console.log('⚠️  Database not available, skipping games tests');
+  }
+});
+
+describe.skipIf(() => !dbAvailable)('Games endpoints', () => {
   const app = createApp();
   let authToken: string;
   let testImageId: string;
