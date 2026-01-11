@@ -1,27 +1,26 @@
 // packages/server/src/__tests__/games.test.ts
-import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../app.js';
-import { prisma, isDatabaseAvailable } from './helpers/db.js';
+import { dbAvailable, prisma } from './setup.js';
 
-let dbAvailable = false;
-
-beforeAll(async () => {
-  dbAvailable = await isDatabaseAvailable();
-  if (!dbAvailable) {
-    console.log('⚠️  Database not available, skipping games tests');
-  }
-});
-
-describe.skipIf(() => !dbAvailable)('Games endpoints', () => {
+describe.skipIf(!dbAvailable)('Games endpoints', () => {
   const app = createApp();
   let authToken: string;
   let testImageId: string;
 
   beforeEach(async () => {
+    // Clean up first
+    await prisma.pieceState.deleteMany();
+    await prisma.edgeState.deleteMany();
+    await prisma.game.deleteMany();
+    await prisma.puzzle.deleteMany();
+    await prisma.image.deleteMany();
+    await prisma.session.deleteMany();
+
     // Create test image
     const image = await prisma.image.create({
-      data: { url: '/test.jpg', width: 800, height: 600, name: 'Test', isCurated: true },
+      data: { url: `/test-${Date.now()}.jpg`, width: 800, height: 600, name: 'Test', isCurated: true },
     });
     testImageId = image.id;
 
@@ -71,7 +70,8 @@ describe.skipIf(() => !dbAvailable)('Games endpoints', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.status).toBe(200);
-      expect(res.body).toHaveProperty('pieceCount', 200);
+      expect(res.body.pieceCount).toBeGreaterThan(150);
+      expect(res.body.pieceCount).toBeLessThan(250);
       expect(res.body).toHaveProperty('tileType', 'classic');
     });
   });

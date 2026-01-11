@@ -1,7 +1,5 @@
 // packages/server/prisma/seed.ts
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../src/lib/prisma.js';
 
 const CURATED_IMAGES = [
   { name: 'Mountain Lake', url: '/images/mountain-lake.jpg', width: 1920, height: 1280 },

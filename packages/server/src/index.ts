@@ -2,10 +2,8 @@
 import { createServer } from 'http';
 import { createApp } from './app.js';
 import { createSocketServer } from './socket/index.js';
-import { PrismaClient } from '@prisma/client';
 
 const PORT = process.env.PORT || 3001;
-const prisma = new PrismaClient();
 
 async function main() {
   const app = createApp();

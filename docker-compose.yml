@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16
+    container_name: puzzler-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mp_puzzler
+    ports:
+      - "5432:5432"
+    volumes:
+      - puzzler-db-data:/var/lib/postgresql/data
+
+volumes:
+  puzzler-db-data:

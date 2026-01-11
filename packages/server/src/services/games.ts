@@ -1,10 +1,8 @@
 // packages/server/src/services/games.ts
-import { PrismaClient } from '@prisma/client';
 import { nanoid } from 'nanoid';
 import { generateClassicStencil } from './stencil/index.js';
 import type { CreateGameInput, Stencil } from '@mp-puzzler/shared';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma.js';
 
 export async function createGame(input: CreateGameInput, sessionId: string) {
   const image = await prisma.image.findUnique({ where: { id: input.imageId } });

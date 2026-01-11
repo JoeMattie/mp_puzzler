@@ -1,19 +1,10 @@
 // packages/server/src/__tests__/auth.test.ts
-import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../app.js';
-import { prisma, isDatabaseAvailable } from './helpers/db.js';
+import { dbAvailable, prisma } from './setup.js';
 
-let dbAvailable = false;
-
-beforeAll(async () => {
-  dbAvailable = await isDatabaseAvailable();
-  if (!dbAvailable) {
-    console.log('⚠️  Database not available, skipping auth tests');
-  }
-});
-
-describe.skipIf(() => !dbAvailable)('Auth endpoints', () => {
+describe.skipIf(!dbAvailable)('Auth endpoints', () => {
   const app = createApp();
 
   beforeEach(async () => {
