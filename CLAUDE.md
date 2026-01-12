@@ -78,6 +78,30 @@ Ownership system prevents conflicts:
 - `piece:drop` validates ownership, checks snaps, merges lock groups
 - Lock groups form when pieces snap together (all pieces move as unit)
 
+## Features
+
+### Debug Mode
+- Toggle with tilde key (`~`)
+- Highlights pieces with matching edges when hovering
+- Sets global `window.DEBUG` flag for additional debugging
+- Useful for visualizing which pieces connect together
+
+### Piece Tray
+- Pieces dropped from board to tray are placed at cursor position
+- Tray pieces can be rotated with right-click
+- Pieces are constrained vertically within tray bounds
+- Tray pieces automatically scale based on piece size to fit properly
+- Dynamic spacing adjusts with scale
+
+### Puzzle Board
+- Semi-transparent cyan outline shows completed puzzle boundary
+- Helps visualize where pieces should end up
+
+### Development
+- WebGL context loss handlers prevent HMR-related crashes
+- Docker compose supports full-stack development environment
+- Proper cleanup on component unmount prevents resource leaks
+
 ## Environment
 
 Server requires `.env`:
@@ -96,8 +120,11 @@ CLIENT_URL=http://localhost:5173
 
 ## Coding Guidelines
 
+- **Git Workflow**: Always work on feature branches, not directly on main. Create a feature branch for each task/feature.
 - **PixiJS**: Use PixiJS builtins whenever possible (coordinate transforms, hit testing, containers, etc.) rather than manual implementations
 - **Type Safety**: Always run `pnpm build` after making changes to catch TypeScript errors. The build runs `tsc` which catches type mismatches that could cause runtime bugs (e.g., accessing non-existent properties)
+- **Planning**: Use superpowers skills (brainstorming, writing-plans, executing-plans, etc.) for multi-step tasks. Plan before implementing.
+- **Documentation**: Update this CLAUDE.md file with helpful information about processes, procedures, and learnings when appropriate. If unsure whether something should be documented, ask.
 
 ## Verification Steps
 

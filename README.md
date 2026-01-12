@@ -35,12 +35,19 @@ pnpm install
 
 ### 2. Set Up Database
 
-Using Docker:
+**Option A: Database only (Docker)**
 ```bash
-docker compose up -d
+docker compose up db -d
 ```
 
-Or configure your own PostgreSQL and update the connection string.
+**Option B: Full stack (Docker)**
+```bash
+docker compose up --build
+```
+This starts PostgreSQL, backend server, and frontend client in containers.
+
+**Option C: Local PostgreSQL**
+Configure your own PostgreSQL and update the connection string.
 
 ### 3. Configure Environment
 
@@ -131,6 +138,7 @@ pnpm -F @mp-puzzler/server prisma studio
 | Pan board | Left-click + drag on empty space |
 | Rotate board | Right-click + drag on empty space |
 | Scroll tray | Mouse wheel over tray, or drag |
+| Debug mode | Tilde key (`~`) - highlights matching edges on hover |
 
 ### Mobile / Touch
 
