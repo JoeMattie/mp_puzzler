@@ -233,6 +233,13 @@ export class Game {
 
     // Draw puzzle outline
     this.drawPuzzleOutline();
+
+    // Set tray scale based on piece size
+    const trayScale = this.calculateTrayScale();
+    this.trayPiecesContainer.scale.set(trayScale);
+
+    // Adjust spacing based on scale
+    this.trayPieceSpacing = 100 * trayScale;
   }
 
   private centerBoard() {
@@ -281,6 +288,22 @@ export class Game {
     this.puzzleOutline.clear();
     this.puzzleOutline.rect(0, 0, this.stencil.imageWidth, this.stencil.imageHeight);
     this.puzzleOutline.stroke({ color: 0x4fc3f7, alpha: 0.3, width: 2 });
+  }
+
+  private calculateTrayScale(): number {
+    if (!this.stencil || this.stencil.pieces.length === 0) return 1;
+
+    // Find the maximum piece dimensions
+    let maxHeight = 0;
+    for (const piece of this.stencil.pieces) {
+      maxHeight = Math.max(maxHeight, piece.bounds.h);
+    }
+
+    // Scale so pieces fit in tray with some padding
+    const targetHeight = this.trayHeight - 20; // 10px padding top and bottom
+    const scale = Math.min(1, targetHeight / maxHeight);
+
+    return scale;
   }
 
   private setupPieceDrag(sprite: Sprite) {
