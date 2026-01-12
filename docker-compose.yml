@@ -19,6 +19,8 @@ services:
     container_name: puzzler-server
     ports:
       - "3001:3001"
+    env_file:
+      - ./packages/server/.env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/mp_puzzler
       JWT_SECRET: dev-secret-key
@@ -29,7 +31,7 @@ services:
     volumes:
       - ./packages/server:/app/packages/server
       - ./packages/shared:/app/packages/shared
-    command: sh -c "cd packages/server && npx prisma generate && cd ../.. && pnpm -F @mp-puzzler/server dev"
+    command: sh -c "cd /app/packages/server && npx prisma generate && cd /app && pnpm -F @mp-puzzler/server dev"
 
   client:
     build:

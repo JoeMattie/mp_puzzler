@@ -11,6 +11,7 @@ RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists
 RUN pnpm install --frozen-lockfile
 COPY packages/shared ./packages/shared
 COPY packages/server ./packages/server
+COPY packages/server/prisma/prisma.config.ts ./packages/server/prisma/
 RUN pnpm -F @mp-puzzler/server prisma generate
 EXPOSE 3001
 

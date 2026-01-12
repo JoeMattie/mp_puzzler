@@ -77,12 +77,23 @@ docker compose up --build
 
 This starts PostgreSQL, backend server, and frontend client in containers with hot-reload support.
 
+**Run database migrations (required on first startup):**
+```bash
+# Apply migrations directly to database
+docker compose exec -T db psql -U postgres -d mp_puzzler < packages/server/prisma/migrations/0_init/migration.sql
+
+# Seed the database (optional)
+pnpm -F @mp-puzzler/server db:seed
+```
+
+**Note:** Due to a Prisma 7 configuration issue with `prisma migrate deploy`, migrations must be applied manually. See [GitHub Issue #28983](https://github.com/prisma/prisma/issues/28983) for details.
+
 **Access the app:**
 - **Client**: http://localhost:5173
 - **Server**: http://localhost:3001
 - **Database**: localhost:5432
 
-**Note:** First startup may show connection errors while services initialize. The app will work once all services are ready (~10-15 seconds).
+**Note:** First startup may show "failed to create session" errors until migrations are run. After running migrations, the app will work normally.
 
 **Stop all services:**
 ```bash
