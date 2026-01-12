@@ -87,6 +87,17 @@ export class Game {
 
     if (this.destroyed) return;
 
+    // Handle WebGL context loss during HMR
+    this.app.canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      console.warn('[game] WebGL context lost');
+    });
+
+    this.app.canvas.addEventListener('webglcontextrestored', () => {
+      console.log('[game] WebGL context restored');
+      // May need to reinitialize textures
+    });
+
     // Create container hierarchy
     this.setupContainers();
 
