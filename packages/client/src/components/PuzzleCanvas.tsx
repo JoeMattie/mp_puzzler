@@ -57,6 +57,9 @@ export function PuzzleCanvas({ gameSlug }: Props) {
             }
           });
         },
+        onPieceRotate: (pieceIndex, rotation) => {
+          socket.emit('piece:rotate', { pieceIndex, rotation });
+        },
       });
 
       // Handle socket events
@@ -89,12 +92,17 @@ export function PuzzleCanvas({ gameSlug }: Props) {
         game.updateCursor(playerId, x, y);
       });
 
-      // Broadcast local cursor position
+      // Broadcast local cursor position in board space
       canvas.addEventListener('pointermove', (e) => {
         const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        socket.emit('cursor:move', { x, y });
+        const screenX = e.clientX - rect.left;
+        const screenY = e.clientY - rect.top;
+
+        // Convert to board space (returns null if in tray)
+        const boardPos = game.getLocalCursorBoardPosition(screenX, screenY);
+        if (boardPos) {
+          socket.emit('cursor:move', { x: boardPos.x, y: boardPos.y });
+        }
       });
     }
 
