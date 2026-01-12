@@ -33,41 +33,33 @@ cd mp_puzzler
 pnpm install
 ```
 
-### 2. Set Up Database
+### 2. Choose Your Development Setup
 
-**Option A: Database only (Docker)**
+You can run the app either **locally** (recommended for development) or fully in **Docker**.
+
+#### Option A: Local Development (Recommended)
+
+**Database only (Docker):**
 ```bash
 docker compose up db -d
 ```
 
-**Option B: Full stack (Docker)**
-```bash
-docker compose up --build
-```
-This starts PostgreSQL, backend server, and frontend client in containers.
-
-**Option C: Local PostgreSQL**
-Configure your own PostgreSQL and update the connection string.
-
-### 3. Configure Environment
-
+**Configure server environment:**
 Create `packages/server/.env`:
 ```env
-DATABASE_URL=postgresql://puzzler:puzzler@localhost:5432/puzzler
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mp_puzzler
 JWT_SECRET=your-secret-key-here
 PORT=3001
 CLIENT_URL=http://localhost:5173
 ```
 
-### 4. Initialize Database
-
+**Initialize database:**
 ```bash
 pnpm -F @mp-puzzler/server prisma migrate deploy
 pnpm -F @mp-puzzler/server db:seed
 ```
 
-### 5. Start Development Server
-
+**Start dev servers:**
 ```bash
 pnpm dev
 ```
@@ -75,6 +67,32 @@ pnpm dev
 The app will be available at:
 - **Client**: http://localhost:5173
 - **Server**: http://localhost:3001
+
+#### Option B: Full Docker Stack
+
+**Start all services:**
+```bash
+docker compose up --build
+```
+
+This starts PostgreSQL, backend server, and frontend client in containers with hot-reload support.
+
+**Access the app:**
+- **Client**: http://localhost:5173
+- **Server**: http://localhost:3001
+- **Database**: localhost:5432
+
+**Note:** First startup may show connection errors while services initialize. The app will work once all services are ready (~10-15 seconds).
+
+**Stop all services:**
+```bash
+docker compose down
+```
+
+#### Option C: Local PostgreSQL
+
+Configure your own PostgreSQL instance and update the connection string in `packages/server/.env`.
+
 
 ## Development
 
