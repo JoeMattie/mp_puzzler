@@ -93,3 +93,83 @@ CLIENT_URL=http://localhost:5173
 - Tests skip gracefully when database unavailable
 - Server tests use Supertest for HTTP endpoints
 - No E2E tests yet (manual testing)
+
+## Coding Guidelines
+
+- **PixiJS**: Use PixiJS builtins whenever possible (coordinate transforms, hit testing, containers, etc.) rather than manual implementations
+- **Type Safety**: Always run `pnpm build` after making changes to catch TypeScript errors. The build runs `tsc` which catches type mismatches that could cause runtime bugs (e.g., accessing non-existent properties)
+
+## Verification Steps
+
+Before considering work complete, always run:
+
+```bash
+# Build all packages (includes TypeScript type checking)
+pnpm build
+
+# Run tests
+pnpm test
+```
+
+TypeScript errors from `tsc` during build are critical - they often indicate bugs like accessing wrong property names or type mismatches that will cause runtime failures.
+
+## PixiJS v8 Reference
+
+This project uses PixiJS v8. Key API details:
+
+### Coordinate Systems
+
+Three coordinate systems:
+- **Local**: Relative to the object's parent container
+- **Global/World**: Relative to the stage (0,0 at top-left of canvas)
+- **Screen**: Relative to the browser viewport
+
+### Container Coordinate Conversion
+
+```typescript
+// Convert local position to global (world) coordinates
+const globalPos = container.toGlobal(new Point(localX, localY));
+
+// Convert global position to container's local coordinates
+const localPos = container.toLocal(new Point(globalX, globalY));
+
+// Get container's own global position
+const pos = container.getGlobalPosition();
+
+// Convert from one container's space to another's
+const posInOther = targetContainer.toLocal(point, sourceContainer);
+```
+
+### FederatedPointerEvent Coordinates
+
+Pointer events provide multiple coordinate properties:
+
+```typescript
+sprite.on('pointermove', (e: FederatedPointerEvent) => {
+  e.global    // Point - coordinates in world/stage space (most common)
+  e.client    // Point - coordinates relative to canvas element
+  e.screen    // Point - coordinates in renderer's screen space
+
+  // Aliases
+  e.globalX, e.globalY  // same as e.global.x, e.global.y
+  e.clientX, e.clientY  // same as e.client.x, e.client.y
+
+  // Convert to container-local coordinates
+  const localPos = e.getLocalPosition(container);
+});
+```
+
+### Key v8 Changes from v7
+
+- **Async init**: `await app.init({...})` instead of `new Application({...})`
+- **Canvas access**: `app.canvas` instead of `app.view`
+- **No BaseTexture**: Use TextureSources instead
+- **Children restriction**: Only Container can have children (not Sprite, Graphics, etc.)
+- **Package structure**: Single import `import { ... } from 'pixi.js'`
+
+### Documentation
+
+- **LLM reference**: https://pixijs.com/llms.txt (quick overview for AI tools)
+- Migration guide: https://pixijs.com/8.x/guides/migrations/v8
+- Events guide: https://pixijs.com/8.x/guides/components/events
+- Scene graph: https://pixijs.com/8.x/guides/concepts/scene-graph

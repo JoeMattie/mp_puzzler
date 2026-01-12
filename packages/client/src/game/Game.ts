@@ -1,5 +1,5 @@
 // packages/client/src/game/Game.ts
-import { Application, Container, Sprite, Texture, Rectangle, Graphics, Text, TextStyle } from 'pixi.js';
+import { Application, Container, Sprite, Texture, Rectangle, Graphics, Text, TextStyle, ColorMatrixFilter, Point } from 'pixi.js';
 import type { Stencil, GameState } from '@mp-puzzler/shared';
 import { generateSpriteSheet, GeneratedSpriteSheet } from './SpriteSheetGenerator';
 import { InputManager } from './InputManager';
@@ -9,11 +9,6 @@ interface BoardTransform {
   y: number;
   rotation: number;
   scale: number;
-}
-
-interface Point {
-  x: number;
-  y: number;
 }
 
 export class Game {
@@ -148,46 +143,14 @@ export class Game {
     this.updateTrayPiecePositions();
   };
 
-  // Coordinate conversion: screen space -> board space
-  screenToBoard(point: Point): Point {
-    // Inverse transform: translate, then rotate, then scale
-    const cos = Math.cos(-this.boardTransform.rotation);
-    const sin = Math.sin(-this.boardTransform.rotation);
-
-    // Translate to board origin
-    const tx = point.x - this.boardTransform.x;
-    const ty = point.y - this.boardTransform.y;
-
-    // Rotate
-    const rx = tx * cos - ty * sin;
-    const ry = tx * sin + ty * cos;
-
-    // Scale
-    return {
-      x: rx / this.boardTransform.scale,
-      y: ry / this.boardTransform.scale,
-    };
+  // Coordinate conversion: screen/global space -> board container local space
+  screenToBoard(point: { x: number; y: number }): Point {
+    return this.boardContainer.toLocal(new Point(point.x, point.y));
   }
 
-  // Coordinate conversion: board space -> screen space
-  boardToScreen(point: Point): Point {
-    // Forward transform: scale, then rotate, then translate
-    const cos = Math.cos(this.boardTransform.rotation);
-    const sin = Math.sin(this.boardTransform.rotation);
-
-    // Scale
-    const sx = point.x * this.boardTransform.scale;
-    const sy = point.y * this.boardTransform.scale;
-
-    // Rotate
-    const rx = sx * cos - sy * sin;
-    const ry = sx * sin + sy * cos;
-
-    // Translate
-    return {
-      x: rx + this.boardTransform.x,
-      y: ry + this.boardTransform.y,
-    };
+  // Coordinate conversion: board container local space -> screen/global space
+  boardToScreen(point: { x: number; y: number }): Point {
+    return this.boardContainer.toGlobal(new Point(point.x, point.y));
   }
 
   // Apply board transform to container
@@ -264,8 +227,8 @@ export class Game {
   private centerBoard() {
     if (!this.stencil) return;
 
-    const boardWidth = this.stencil.width;
-    const boardHeight = this.stencil.height;
+    const boardWidth = this.stencil.imageWidth;
+    const boardHeight = this.stencil.imageHeight;
     const screenWidth = this.app.screen.width;
     const screenHeight = this.app.screen.height - this.trayHeight;
 
@@ -292,6 +255,22 @@ export class Game {
   }
 
   private setupPieceDrag(sprite: Sprite) {
+    // Hover highlight
+    const hoverFilter = new ColorMatrixFilter();
+    hoverFilter.brightness(1.2, false);
+
+    sprite.on('pointerover', () => {
+      if (!this.isDragging) {
+        sprite.filters = [hoverFilter];
+      }
+    });
+
+    sprite.on('pointerout', () => {
+      if (!this.isDragging) {
+        sprite.filters = [];
+      }
+    });
+
     sprite.on('pointerdown', (e) => {
       // Only handle left click for drag
       if (e.button !== 0) return;
@@ -306,26 +285,18 @@ export class Game {
       sprite.cursor = 'grabbing';
       sprite.zIndex = 1000;
 
-      // If picking up from tray, move to board container
-      if (inTray) {
-        // Get global position while still in tray
-        const globalPos = sprite.getGlobalPosition();
+      // Calculate drag offset in the piece's current container space
+      const container = inTray ? this.trayPiecesContainer : this.boardContainer;
+      const localPos = e.getLocalPosition(container);
+      this.dragOffset.x = localPos.x - sprite.x;
+      this.dragOffset.y = localPos.y - sprite.y;
 
-        // Remove from tray and add to board
-        this.trayPiecesContainer.removeChild(sprite);
-        this.boardContainer.addChild(sprite);
-        this.pieceInTray.set(pieceIndex, false);
-
-        // Convert global position to board-local position
-        const localPos = this.boardContainer.toLocal(globalPos);
-        sprite.x = localPos.x;
-        sprite.y = localPos.y;
-      }
-
-      // Calculate drag offset in board space
-      const boardPos = this.boardContainer.toLocal(e.global);
-      this.dragOffset.x = boardPos.x - sprite.x;
-      this.dragOffset.y = boardPos.y - sprite.y;
+      console.log('[drag] GRAB piece', pieceIndex, {
+        container: inTray ? 'tray' : 'board',
+        spritePos: { x: sprite.x, y: sprite.y },
+        cursorLocal: { x: localPos.x, y: localPos.y },
+        dragOffset: { ...this.dragOffset },
+      });
 
       this.onPieceGrab?.(pieceIndex);
     });
@@ -333,12 +304,38 @@ export class Game {
     sprite.on('globalpointermove', (e) => {
       if (!this.isDragging || this.draggedPiece !== sprite) return;
 
-      const boardPos = this.boardContainer.toLocal(e.global);
-
-      sprite.x = boardPos.x - this.dragOffset.x;
-      sprite.y = boardPos.y - this.dragOffset.y;
-
       const pieceIndex = (sprite as any).pieceIndex;
+      const inTray = this.pieceInTray.get(pieceIndex);
+      const cursorInTray = this.isInTray(e.global.y);
+
+      // If piece is in tray and cursor moves out, transfer to board
+      if (inTray && !cursorInTray) {
+        this.trayPiecesContainer.removeChild(sprite);
+        this.boardContainer.addChild(sprite);
+        this.pieceInTray.set(pieceIndex, false);
+
+        // Place piece at cursor position in board space
+        const boardPos = e.getLocalPosition(this.boardContainer);
+        sprite.x = boardPos.x;
+        sprite.y = boardPos.y;
+
+        // Reset drag offset since piece is now at cursor
+        this.dragOffset.x = 0;
+        this.dragOffset.y = 0;
+
+        console.log('[drag] TRANSFER tray->board piece', pieceIndex, {
+          cursorGlobal: { x: e.global.x, y: e.global.y },
+          newBoardPos: { x: sprite.x, y: sprite.y },
+        });
+      }
+
+      // Update position in the appropriate container space
+      const currentInTray = this.pieceInTray.get(pieceIndex);
+      const container = currentInTray ? this.trayPiecesContainer : this.boardContainer;
+      const localPos = e.getLocalPosition(container);
+      sprite.x = localPos.x - this.dragOffset.x;
+      sprite.y = localPos.y - this.dragOffset.y;
+
       this.onPieceMove?.(pieceIndex, sprite.x, sprite.y);
     });
 
@@ -346,23 +343,45 @@ export class Game {
       if (this.draggedPiece !== sprite) return;
 
       const pieceIndex = (sprite as any).pieceIndex;
+      const inTray = this.pieceInTray.get(pieceIndex);
 
       this.isDragging = false;
       sprite.cursor = 'grab';
       sprite.zIndex = 0;
+      sprite.filters = [];
 
       // Check if dropped in tray zone
       const globalPos = sprite.getGlobalPosition();
-      if (this.isInTray(globalPos.y)) {
-        // Move to tray
-        this.boardContainer.removeChild(sprite);
-        this.trayPiecesContainer.addChild(sprite);
-        this.pieceInTray.set(pieceIndex, true);
+      const droppedInTrayZone = this.isInTray(globalPos.y);
 
-        // Assign panel order (add to end)
-        const trayPieceCount = Array.from(this.pieceInTray.values()).filter((v) => v).length;
-        sprite.x = this.trayPiecePadding + (trayPieceCount - 1) * this.trayPieceSpacing;
-        sprite.y = 0;
+      if (droppedInTrayZone) {
+        // Move to tray (if not already there)
+        if (!inTray) {
+          this.boardContainer.removeChild(sprite);
+          this.trayPiecesContainer.addChild(sprite);
+          this.pieceInTray.set(pieceIndex, true);
+
+          // Assign panel order (add to end) - only for newly added pieces
+          const trayPieceCount = Array.from(this.pieceInTray.values()).filter((v) => v).length;
+          sprite.x = this.trayPiecePadding + (trayPieceCount - 1) * this.trayPieceSpacing;
+          sprite.y = 0;
+
+          console.log('[drag] DROP board->tray piece', pieceIndex, {
+            globalPos: { x: globalPos.x, y: globalPos.y },
+            newTrayPos: { x: sprite.x, y: sprite.y },
+            trayPieceCount,
+          });
+        } else {
+          console.log('[drag] DROP in tray (stayed) piece', pieceIndex, {
+            globalPos: { x: globalPos.x, y: globalPos.y },
+            trayPos: { x: sprite.x, y: sprite.y },
+          });
+        }
+      } else {
+        console.log('[drag] DROP on board piece', pieceIndex, {
+          globalPos: { x: globalPos.x, y: globalPos.y },
+          boardPos: { x: sprite.x, y: sprite.y },
+        });
       }
 
       this.onPieceDrop?.(pieceIndex, sprite.x, sprite.y, sprite.rotation);
@@ -524,13 +543,15 @@ export class Game {
 
     if (newScale === oldScale) return;
 
-    // Zoom toward cursor position
-    const worldX = (screenX - this.boardTransform.x) / oldScale;
-    const worldY = (screenY - this.boardTransform.y) / oldScale;
+    // Get world position under cursor before scaling (using current container transform)
+    const worldPos = this.boardContainer.toLocal(new Point(screenX, screenY));
 
+    // Update scale
     this.boardTransform.scale = newScale;
-    this.boardTransform.x = screenX - worldX * newScale;
-    this.boardTransform.y = screenY - worldY * newScale;
+
+    // Adjust position so worldPos stays under cursor after scaling
+    this.boardTransform.x = screenX - worldPos.x * newScale;
+    this.boardTransform.y = screenY - worldPos.y * newScale;
 
     this.applyBoardTransform();
   }
