@@ -10,7 +10,7 @@ export class Game {
   private pieces: Map<number, Sprite> = new Map();
   private spriteSheet: GeneratedSpriteSheet | null = null;
   private stencil: Stencil | null = null;
-  public cursors: Map<string, { sprite: Graphics; label: Text }> = new Map();
+  public cursors: Map<string, { sprite: Container; label: Text }> = new Map();
 
   private isDragging = false;
   private draggedPiece: Sprite | null = null;
@@ -197,10 +197,13 @@ export class Game {
   addCursor(playerId: string, displayName: string) {
     if (this.cursors.has(playerId)) return;
 
-    const cursor = new Graphics();
-    cursor.circle(0, 0, 8);
-    cursor.fill({ color: 0x4fc3f7, alpha: 0.8 });
-    cursor.visible = false;
+    // Use Container to hold both cursor dot and label (Graphics can't have children in v8)
+    const cursorContainer = new Container();
+    cursorContainer.visible = false;
+
+    const cursorDot = new Graphics();
+    cursorDot.circle(0, 0, 8);
+    cursorDot.fill({ color: 0x4fc3f7, alpha: 0.8 });
 
     const label = new Text({
       text: displayName,
@@ -212,10 +215,12 @@ export class Game {
     });
     label.y = 12;
     label.anchor.set(0.5, 0);
-    cursor.addChild(label);
 
-    this.surface.addChild(cursor);
-    this.cursors.set(playerId, { sprite: cursor, label });
+    cursorContainer.addChild(cursorDot);
+    cursorContainer.addChild(label);
+
+    this.surface.addChild(cursorContainer);
+    this.cursors.set(playerId, { sprite: cursorContainer, label });
   }
 
   updateCursor(playerId: string, x: number, y: number) {
