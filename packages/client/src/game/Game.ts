@@ -42,6 +42,9 @@ export class Game {
   private dragOffset = { x: 0, y: 0 };
   private dragStartedInTray = false;
 
+  // Debug state
+  private debugMode = false;
+
   // Rotation state
   private isRotatingPiece = false;
   private rotatingPiece: Sprite | null = null;
@@ -398,6 +401,15 @@ export class Game {
 
     // Prevent context menu on right click
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Keyboard listener for debug mode toggle
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '`' || e.key === '~') {
+        this.debugMode = !this.debugMode;
+        (window as any).DEBUG = this.debugMode;
+        console.log('[debug] Debug mode:', this.debugMode ? 'ON' : 'OFF');
+      }
+    });
 
     // Mouse wheel for zoom (board) or scroll (tray)
     canvas.addEventListener('wheel', (e) => {
