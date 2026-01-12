@@ -398,15 +398,14 @@ export class Game {
           this.trayPiecesContainer.addChild(sprite);
           this.pieceInTray.set(pieceIndex, true);
 
-          // Assign panel order (add to end) - only for newly added pieces
-          const trayPieceCount = Array.from(this.pieceInTray.values()).filter((v) => v).length;
-          sprite.x = this.trayPiecePadding + (trayPieceCount - 1) * this.trayPieceSpacing;
+          // Place at cursor X position in tray, not at end
+          const trayLocalPos = this.trayPiecesContainer.toLocal(globalPos);
+          sprite.x = trayLocalPos.x;
           sprite.y = 0;
 
           console.log('[drag] DROP board->tray piece', pieceIndex, {
             globalPos: { x: globalPos.x, y: globalPos.y },
             newTrayPos: { x: sprite.x, y: sprite.y },
-            trayPieceCount,
           });
         } else {
           console.log('[drag] DROP in tray (stayed) piece', pieceIndex, {
