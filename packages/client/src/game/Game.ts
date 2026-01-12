@@ -19,6 +19,7 @@ export class Game {
   private trayContainer!: Container;
   private trayBackground!: Graphics;
   private trayPiecesContainer!: Container;
+  private puzzleOutline!: Graphics;
 
   // State
   private pieces: Map<number, Sprite> = new Map();
@@ -106,6 +107,10 @@ export class Game {
     this.boardContainer = new Container();
     this.boardContainer.sortableChildren = true;
     this.app.stage.addChild(this.boardContainer);
+
+    // Puzzle outline
+    this.puzzleOutline = new Graphics();
+    this.boardContainer.addChild(this.puzzleOutline);
 
     // Tray container - fixed to bottom
     this.trayContainer = new Container();
@@ -225,6 +230,9 @@ export class Game {
 
     // Center board initially
     this.centerBoard();
+
+    // Draw puzzle outline
+    this.drawPuzzleOutline();
   }
 
   private centerBoard() {
@@ -265,6 +273,14 @@ export class Game {
 
     // Get all neighbor indices from this piece's edges
     return piece.edges.map(e => e.neighborIndex).filter(idx => idx !== -1);
+  }
+
+  private drawPuzzleOutline() {
+    if (!this.stencil) return;
+
+    this.puzzleOutline.clear();
+    this.puzzleOutline.rect(0, 0, this.stencil.imageWidth, this.stencil.imageHeight);
+    this.puzzleOutline.stroke({ color: 0x4fc3f7, alpha: 0.3, width: 2 });
   }
 
   private setupPieceDrag(sprite: Sprite) {
