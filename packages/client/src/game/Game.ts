@@ -373,6 +373,11 @@ export class Game {
       sprite.x = localPos.x - this.dragOffset.x;
       sprite.y = localPos.y - this.dragOffset.y;
 
+      // Constrain Y to stay within tray (centered vertically)
+      if (currentInTray) {
+        sprite.y = 0;
+      }
+
       this.onPieceMove?.(pieceIndex, sprite.x, sprite.y);
     });
 
