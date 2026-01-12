@@ -257,6 +257,16 @@ export class Game {
     this.trayPiecesContainer.x = -this.trayScrollX;
   }
 
+  private getPiecesWithMatchingEdges(pieceIndex: number): number[] {
+    if (!this.stencil) return [];
+
+    const piece = this.stencil.pieces[pieceIndex];
+    if (!piece) return [];
+
+    // Get all neighbor indices from this piece's edges
+    return piece.edges.map(e => e.neighborIndex).filter(idx => idx !== -1);
+  }
+
   private setupPieceDrag(sprite: Sprite) {
     // Hover highlight
     const hoverFilter = new ColorMatrixFilter();
@@ -265,12 +275,36 @@ export class Game {
     sprite.on('pointerover', () => {
       if (!this.isDragging) {
         sprite.filters = [hoverFilter];
+
+        // Debug mode: highlight pieces with matching edges
+        if (this.debugMode) {
+          const pieceIndex = (sprite as any).pieceIndex;
+          const matchingPieces = this.getPiecesWithMatchingEdges(pieceIndex);
+          for (const matchIdx of matchingPieces) {
+            const matchSprite = this.pieces.get(matchIdx);
+            if (matchSprite && matchSprite !== sprite) {
+              matchSprite.filters = [hoverFilter];
+            }
+          }
+        }
       }
     });
 
     sprite.on('pointerout', () => {
       if (!this.isDragging) {
         sprite.filters = [];
+
+        // Debug mode: clear matching piece highlights
+        if (this.debugMode) {
+          const pieceIndex = (sprite as any).pieceIndex;
+          const matchingPieces = this.getPiecesWithMatchingEdges(pieceIndex);
+          for (const matchIdx of matchingPieces) {
+            const matchSprite = this.pieces.get(matchIdx);
+            if (matchSprite) {
+              matchSprite.filters = [];
+            }
+          }
+        }
       }
     });
 
