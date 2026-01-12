@@ -88,10 +88,11 @@ export function generateClassicStencil(options: GenerateOptions): Stencil {
         index,
         path,
         bounds: {
-          x: x - pieceWidth * 0.15,
-          y: y - pieceHeight * 0.15,
-          w: pieceWidth * 1.3,
-          h: pieceHeight * 1.3,
+          // Padding must exceed tab extension (2*tabRadius + neckWidth = 2*12% + 6% = 30%)
+          x: x - pieceWidth * 0.35,
+          y: y - pieceHeight * 0.35,
+          w: pieceWidth * 1.70,
+          h: pieceHeight * 1.70,
         },
         centroid: { x: x + pieceWidth / 2, y: y + pieceHeight / 2 },
         correctPosition: { x, y },

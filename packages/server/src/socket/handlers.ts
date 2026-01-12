@@ -11,6 +11,11 @@ const pieceOwners = new Map<string, Map<number, string>>();
 // Track connected players: gameId -> Set<sessionId>
 const gamePlayers = new Map<string, Set<string>>();
 
+// Export function to get player count for a game
+export function getGamePlayerCount(gameId: string): number {
+  return gamePlayers.get(gameId)?.size ?? 0;
+}
+
 // Track player socket mapping: sessionId -> socket
 const playerSockets = new Map<string, Socket>();
 

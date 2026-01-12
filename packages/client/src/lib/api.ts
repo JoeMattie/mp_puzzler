@@ -33,11 +33,25 @@ export const api = {
     get: (id: string) => request<{ id: string; url: string; name: string; width: number; height: number }>(`/images/${id}`),
   },
   games: {
+    list: () =>
+      request<
+        Array<{
+          id: string;
+          urlSlug: string;
+          pieceCount: number;
+          imageName: string;
+          imageUrl: string;
+          createdAt: string;
+          playerCount: number;
+        }>
+      >('/games'),
     create: (data: { imageId: string; pieceCount: number; tileType: string }) =>
       request<{ id: string; urlSlug: string; pieceCount: number; imageUrl: string }>('/games', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    delete: (slug: string) =>
+      request<{ success: boolean }>(`/games/${slug}`, { method: 'DELETE' }),
     get: (slug: string) =>
       request<{
         id: string;

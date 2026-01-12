@@ -9,55 +9,85 @@ export function generateTabPath(
   start: Point,
   end: Point,
   isTab: boolean,
-  seed: number
+  _seed: number
 ): string {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   const length = Math.sqrt(dx * dx + dy * dy);
 
-  // Normalize direction
+  // Normalize direction (along the edge)
   const nx = dx / length;
   const ny = dy / length;
 
-  // Perpendicular direction
+  // Perpendicular direction (pointing "outward" for tab)
   const px = -ny;
   const py = nx;
 
-  // Tab parameters with slight randomization
-  const tabHeight = length * 0.25 * (0.9 + seededRandom(seed) * 0.2);
-  const tabWidth = length * 0.35 * (0.9 + seededRandom(seed + 1) * 0.2);
-  const neckWidth = length * 0.15 * (0.9 + seededRandom(seed + 2) * 0.2);
+  // Fixed tab parameters for consistent round shape
+  const tabRadius = length * 0.12;
+  const neckWidth = length * 0.06;
 
   const direction = isTab ? 1 : -1;
 
-  // Key points along the edge
-  const p1 = { x: start.x + dx * 0.35, y: start.y + dy * 0.35 };
-  const p2 = { x: start.x + dx * 0.4, y: start.y + dy * 0.4 };
-  const p3 = {
-    x: start.x + dx * 0.5 + px * tabHeight * direction,
-    y: start.y + dy * 0.5 + py * tabHeight * direction,
-  };
-  const p4 = { x: start.x + dx * 0.6, y: start.y + dy * 0.6 };
-  const p5 = { x: start.x + dx * 0.65, y: start.y + dy * 0.65 };
+  // Neck start/end points (where the tab connects to the edge)
+  const neckStart = { x: start.x + dx * 0.4, y: start.y + dy * 0.4 };
+  const neckEnd = { x: start.x + dx * 0.6, y: start.y + dy * 0.6 };
 
-  // Control points for bezier curves
+  // Points at the neck opening (slightly out from edge)
+  const neckOpenLeft = {
+    x: neckStart.x + px * neckWidth * direction,
+    y: neckStart.y + py * neckWidth * direction,
+  };
+  const neckOpenRight = {
+    x: neckEnd.x + px * neckWidth * direction,
+    y: neckEnd.y + py * neckWidth * direction,
+  };
+
+  // Tab center and key points on the circle
+  const tabCenter = {
+    x: start.x + dx * 0.5 + px * (tabRadius + neckWidth) * direction,
+    y: start.y + dy * 0.5 + py * (tabRadius + neckWidth) * direction,
+  };
+
+  // Points on the circle (left, tip, right)
+  const circleLeft = {
+    x: tabCenter.x - nx * tabRadius,
+    y: tabCenter.y - ny * tabRadius,
+  };
+  const circleTip = {
+    x: tabCenter.x + px * tabRadius * direction,
+    y: tabCenter.y + py * tabRadius * direction,
+  };
+  const circleRight = {
+    x: tabCenter.x + nx * tabRadius,
+    y: tabCenter.y + ny * tabRadius,
+  };
+
+  // Control point distance for bezier circle approximation
+  const cp = tabRadius * 0.55;
+
   return [
-    `L ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`,
-    `C ${p1.x + px * neckWidth * direction} ${p1.y + py * neckWidth * direction}`,
-    `${p2.x + px * tabHeight * direction - nx * tabWidth} ${p2.y + py * tabHeight * direction - ny * tabWidth}`,
-    `${p3.x - nx * tabWidth * 0.3} ${p3.y - ny * tabWidth * 0.3}`,
-    `C ${p3.x + nx * tabWidth * 0.3} ${p3.y + ny * tabWidth * 0.3}`,
-    `${p4.x + px * tabHeight * direction + nx * tabWidth} ${p4.y + py * tabHeight * direction + ny * tabWidth}`,
-    `${p5.x + px * neckWidth * direction} ${p5.y + py * neckWidth * direction}`,
+    `L ${neckStart.x.toFixed(2)} ${neckStart.y.toFixed(2)}`,
+    // Line to neck opening
+    `L ${neckOpenLeft.x.toFixed(2)} ${neckOpenLeft.y.toFixed(2)}`,
+    // Line to left side of circle
+    `L ${circleLeft.x.toFixed(2)} ${circleLeft.y.toFixed(2)}`,
+    // Bezier curve from left to tip (quarter circle)
+    `C ${(circleLeft.x + px * cp * direction).toFixed(2)} ${(circleLeft.y + py * cp * direction).toFixed(2)}`,
+    `${(circleTip.x - nx * cp).toFixed(2)} ${(circleTip.y - ny * cp).toFixed(2)}`,
+    `${circleTip.x.toFixed(2)} ${circleTip.y.toFixed(2)}`,
+    // Bezier curve from tip to right (quarter circle)
+    `C ${(circleTip.x + nx * cp).toFixed(2)} ${(circleTip.y + ny * cp).toFixed(2)}`,
+    `${(circleRight.x + px * cp * direction).toFixed(2)} ${(circleRight.y + py * cp * direction).toFixed(2)}`,
+    `${circleRight.x.toFixed(2)} ${circleRight.y.toFixed(2)}`,
+    // Line to neck opening right
+    `L ${neckOpenRight.x.toFixed(2)} ${neckOpenRight.y.toFixed(2)}`,
+    // Line back to edge
+    `L ${neckEnd.x.toFixed(2)} ${neckEnd.y.toFixed(2)}`,
     `L ${end.x.toFixed(2)} ${end.y.toFixed(2)}`,
   ].join(' ');
 }
 
 export function generateFlatPath(start: Point, end: Point): string {
   return `L ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
-}
-
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
 }

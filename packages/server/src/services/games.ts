@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { generateClassicStencil } from './stencil/index.js';
 import type { CreateGameInput, Stencil } from '@mp-puzzler/shared';
 import { prisma } from '../lib/prisma.js';
+import { getGamePlayerCount } from '../socket/handlers.js';
 
 export async function createGame(input: CreateGameInput, sessionId: string) {
   const image = await prisma.image.findUnique({ where: { id: input.imageId } });
@@ -157,4 +158,50 @@ function shuffle<T>(array: T[]): T[] {
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+export async function listGames() {
+  const games = await prisma.game.findMany({
+    where: { status: 'active' },
+    include: {
+      puzzle: {
+        include: { image: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return games.map((game) => ({
+    id: game.id,
+    urlSlug: game.urlSlug,
+    pieceCount: game.puzzle.pieceCount,
+    imageName: game.puzzle.image.name,
+    imageUrl: game.puzzle.image.url,
+    createdAt: game.createdAt.toISOString(),
+    playerCount: getGamePlayerCount(game.id),
+  }));
+}
+
+export async function deleteGame(slug: string): Promise<{ success: boolean; error?: string }> {
+  const game = await prisma.game.findUnique({
+    where: { urlSlug: slug },
+  });
+
+  if (!game) {
+    return { success: false, error: 'Game not found' };
+  }
+
+  // Check if players are connected
+  const playerCount = getGamePlayerCount(game.id);
+  if (playerCount > 0) {
+    return { success: false, error: 'Cannot delete game while players are connected' };
+  }
+
+  // Delete in order: EdgeState, PieceState, Game, then Puzzle
+  await prisma.edgeState.deleteMany({ where: { gameId: game.id } });
+  await prisma.pieceState.deleteMany({ where: { gameId: game.id } });
+  await prisma.game.delete({ where: { id: game.id } });
+  await prisma.puzzle.delete({ where: { id: game.puzzleId } });
+
+  return { success: true };
 }

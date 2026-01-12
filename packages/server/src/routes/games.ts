@@ -1,10 +1,19 @@
 // packages/server/src/routes/games.ts
 import { Router } from 'express';
 import { createGameSchema } from '@mp-puzzler/shared';
-import { createGame, getGameBySlug, getGameStencil, getGameState } from '../services/games.js';
+import { createGame, getGameBySlug, getGameStencil, getGameState, listGames, deleteGame } from '../services/games.js';
 import { authMiddleware, optionalAuth, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
+
+router.get('/', async (_req, res) => {
+  try {
+    const games = await listGames();
+    res.json(games);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to list games' });
+  }
+});
 
 router.post('/', authMiddleware, async (req: AuthRequest, res) => {
   try {
@@ -16,6 +25,18 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Invalid input', details: error.errors });
     }
     res.status(500).json({ error: error.message || 'Failed to create game' });
+  }
+});
+
+router.delete('/:slug', async (req, res) => {
+  try {
+    const result = await deleteGame(req.params.slug);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to delete game' });
   }
 });
 
