@@ -564,6 +564,23 @@ export class Game {
   }
 
   private getPieceAtScreen(screenX: number, screenY: number): Sprite | null {
+    // Check tray pieces first if in tray area
+    if (this.isInTray(screenY)) {
+      const trayPos = this.trayPiecesContainer.toLocal(new Point(screenX, screenY));
+      for (const [, sprite] of this.pieces) {
+        if (this.pieceInTray.get((sprite as any).pieceIndex)) {
+          const localX = trayPos.x - sprite.x;
+          const localY = trayPos.y - sprite.y;
+          const halfW = sprite.width / 2;
+          const halfH = sprite.height / 2;
+          if (localX >= -halfW && localX <= halfW && localY >= -halfH && localY <= halfH) {
+            return sprite;
+          }
+        }
+      }
+      return null;
+    }
+
     // Check board pieces
     const boardPos = this.screenToBoard({ x: screenX, y: screenY });
     for (const [, sprite] of this.pieces) {
