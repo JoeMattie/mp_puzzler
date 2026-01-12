@@ -29,7 +29,7 @@ services:
     volumes:
       - ./packages/server:/app/packages/server
       - ./packages/shared:/app/packages/shared
-    command: pnpm -F @mp-puzzler/server dev
+    command: sh -c "cd packages/server && npx prisma generate && cd ../.. && pnpm -F @mp-puzzler/server dev"
 
   client:
     build:
