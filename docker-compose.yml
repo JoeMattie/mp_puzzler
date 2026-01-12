@@ -11,5 +11,40 @@ services:
     volumes:
       - puzzler-db-data:/var/lib/postgresql/data
 
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: server
+    container_name: puzzler-server
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/mp_puzzler
+      JWT_SECRET: dev-secret-key
+      PORT: 3001
+      CLIENT_URL: http://localhost:5173
+    depends_on:
+      - db
+    volumes:
+      - ./packages/server:/app/packages/server
+      - ./packages/shared:/app/packages/shared
+    command: pnpm -F @mp-puzzler/server dev
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: client
+    container_name: puzzler-client
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    volumes:
+      - ./packages/client:/app/packages/client
+      - ./packages/shared:/app/packages/shared
+    command: pnpm -F @mp-puzzler/client dev --host
+
 volumes:
   puzzler-db-data:
