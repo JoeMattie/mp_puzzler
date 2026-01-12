@@ -308,24 +308,22 @@ export class Game {
 
       // If picking up from tray, move to board container
       if (inTray) {
-        // Convert tray position to screen position
-        const screenX = sprite.x - this.trayScrollX;
-        const screenY = this.app.screen.height - this.trayHeight / 2;
+        // Get global position while still in tray
+        const globalPos = sprite.getGlobalPosition();
 
-        // Remove from tray
+        // Remove from tray and add to board
         this.trayPiecesContainer.removeChild(sprite);
         this.boardContainer.addChild(sprite);
         this.pieceInTray.set(pieceIndex, false);
 
-        // Convert screen position to board position
-        const boardPos = this.screenToBoard({ x: screenX, y: screenY });
-        sprite.x = boardPos.x;
-        sprite.y = boardPos.y;
+        // Convert global position to board-local position
+        const localPos = this.boardContainer.toLocal(globalPos);
+        sprite.x = localPos.x;
+        sprite.y = localPos.y;
       }
 
       // Calculate drag offset in board space
-      const screenPos = e.global;
-      const boardPos = this.screenToBoard({ x: screenPos.x, y: screenPos.y });
+      const boardPos = this.boardContainer.toLocal(e.global);
       this.dragOffset.x = boardPos.x - sprite.x;
       this.dragOffset.y = boardPos.y - sprite.y;
 
@@ -335,8 +333,7 @@ export class Game {
     sprite.on('globalpointermove', (e) => {
       if (!this.isDragging || this.draggedPiece !== sprite) return;
 
-      const screenPos = e.global;
-      const boardPos = this.screenToBoard({ x: screenPos.x, y: screenPos.y });
+      const boardPos = this.boardContainer.toLocal(e.global);
 
       sprite.x = boardPos.x - this.dragOffset.x;
       sprite.y = boardPos.y - this.dragOffset.y;
@@ -355,8 +352,8 @@ export class Game {
       sprite.zIndex = 0;
 
       // Check if dropped in tray zone
-      const screenPos = this.boardToScreen({ x: sprite.x, y: sprite.y });
-      if (this.isInTray(screenPos.y)) {
+      const globalPos = sprite.getGlobalPosition();
+      if (this.isInTray(globalPos.y)) {
         // Move to tray
         this.boardContainer.removeChild(sprite);
         this.trayPiecesContainer.addChild(sprite);
